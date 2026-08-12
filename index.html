@@ -105,6 +105,10 @@
     </div>
   </dialog>
 
+  <dialog id="deleteDialog" class="confirm-dialog">
+    <div><span class="confirm-icon">×</span><h2>Удалить материал?</h2><p id="deleteMessage">Материал будет удалён из библиотеки.</p><div class="modal-actions"><button class="ghost" id="cancelDelete">Отмена</button><button class="danger-btn" id="confirmDelete">Удалить</button></div></div>
+  </dialog>
+
   <div class="popover hidden" id="profilePopover"><strong>Teacher Marina</strong><button id="exportBtn">Экспортировать данные</button><label>Импортировать данные<input id="importInput" type="file" accept="application/json"></label></div>
   <div class="toast" id="toast"></div><div class="scrim" id="scrim"></div>
   <script src="script.js"></script>
