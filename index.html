@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Радуга — Teaching Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="aurora one"></div><div class="aurora two"></div>
+  <aside class="sidebar" id="sidebar">
+    <button class="close-mobile" id="closeMenu" aria-label="Закрыть меню"><span>×</span></button>
+    <div class="logo"><img src="assets/raduga-logo-card.png" alt="Радуга — студия английского языка, Teacher Marina"></div>
+    <nav id="nav">
+      <button data-view="home"><i>⌂</i><span>Главная</span></button>
+      <button data-view="groups"><i>♧</i><span>Мои группы</span><b>›</b></button>
+      <button data-view="library"><i>▱</i><span>Библиотека</span></button>
+      <button data-view="materials"><i>▤</i><span>Материалы</span></button>
+      <button data-view="levels"><i>▥</i><span>Уровни</span></button>
+      <hr>
+      <button class="active" data-view="oge"><i>◇</i><span>ОГЭ</span><b>›</b></button>
+      <button data-view="vpr"><i>☑</i><span>ВПР</span></button>
+    </nav>
+    <a class="vk-link" href="https://vk.ru/english_akhtyrsky" target="_blank" rel="noopener noreferrer" aria-label="Открыть группу Радуга ВКонтакте">
+      <i>VK</i><span><strong>Мы ВКонтакте</strong><small>Новости, идеи и материалы</small></span><b>↗</b>
+    </a>
+    <div class="sidebar-note"><span>✦</span><p>Знания сияют ярче,<br>когда ими делятся.</p></div>
+  </aside>
+
+  <div class="shell">
+    <header>
+      <button class="icon-btn menu" id="openMenu" aria-label="Меню">☰</button>
+      <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Найти группу или материал..."></label>
+      <button class="icon-btn" id="helpBtn" aria-label="Помощь">?</button>
+      <button class="profile" id="profileBtn"><span class="avatar">М</span><span><strong>Teacher Marina</strong><small>Преподаватель</small></span><b>⌄</b></button>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div><p class="eyebrow" id="eyebrow">РАБОЧЕЕ ПРОСТРАНСТВО</p><h1 id="pageTitle">Подготовка к ОГЭ</h1><p id="pageSubtitle">Материалы и ссылки для подготовки к экзамену.</p></div>
+        <button class="primary" id="addBtn"><span>＋</span> Добавить материал</button>
+      </section>
+
+      <section id="groupView" class="hidden">
+        <div class="toolbar">
+          <div class="filters" id="filters">
+            <button class="active" data-level="all">Все</button><button data-level="Starter">Starter</button><button data-level="A1">A1</button><button data-level="A2">A2</button><button data-level="B1">B1</button><button data-level="B2">B2</button>
+          </div>
+          <span class="counter" id="count"></span>
+        </div>
+        <div class="cards" id="cards"></div>
+      </section>
+
+      <section id="resourceView">
+        <div class="resource-toolbar"><div class="resource-tabs" id="resourceTabs"><button class="active" data-kind="all">Все</button><button data-kind="book">Книги</button><button data-kind="pdf">PDF</button><button data-kind="link">Ссылки</button></div><button class="secondary" id="addResourceBtn">＋ Добавить материал</button></div>
+        <div class="exam-blocks" id="examBlocks"></div>
+        <div class="resource-grid" id="resources"></div>
+        <div class="exam-widgets" id="examWidgets">
+          <article class="progress-card"><h3><span>▥</span> Прогресс подготовки</h3><div class="progress-content"><div class="progress-ring" id="progressRing"><strong id="progressPercent">0%</strong></div><div><b id="examCountdown">Укажите дату экзамена</b><p id="progressText">Добавьте задачи в план подготовки.</p></div><button id="planBtn">К плану подготовки　›</button></div></article>
+          <article class="tip-card"><div class="tip-icon">♧</div><div><h3>Совет дня</h3><p>Решайте задания прошлых лет регулярно — это лучший способ понять формат экзамена.</p></div><span>“</span></article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="groupDialog">
+    <form method="dialog" id="groupForm"><div class="modal-head"><div><p>РЕДАКТОР</p><h2 id="groupModalTitle">Новая группа</h2></div><button class="modal-close" value="cancel" formnovalidate aria-label="Закрыть">×</button></div>
+      <input type="hidden" name="id"><div class="form-grid">
+        <label class="wide">Название группы<input name="name" required placeholder="Например, Go Getter 2"></label>
+        <label>Уровень<select name="level"><option>Starter</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></label>
+        <label>Возраст<input name="age" placeholder="10–11 лет"></label>
+        <label class="wide">Текущая тема<input name="topic" placeholder="My day"></label>
+        <label class="wide">Ссылка на группу<input name="url" type="url" placeholder="https://..."></label>
+        <label class="wide">Обложка книги (ссылка на изображение)<input name="cover" type="url" placeholder="https://.../cover.jpg"></label>
+      </div><div class="modal-actions"><button value="cancel" formnovalidate class="ghost">Отмена</button><button type="submit" value="default" class="primary">Сохранить</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="resourceDialog">
+    <form method="dialog" id="resourceForm"><div class="modal-head"><div><p>БИБЛИОТЕКА</p><h2 id="resourceModalTitle">Новый материал</h2></div><button class="modal-close" value="cancel" formnovalidate>×</button></div>
+      <input type="hidden" name="id"><div class="form-grid">
+        <label class="wide">Название<input name="title" required placeholder="Workbook Unit 3"></label>
+        <label>Тип<select name="kind"><option value="book">Книга</option><option value="pdf">PDF</option><option value="link">Ссылка</option></select></label>
+        <label>Уровень<select name="level"><option>Starter</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></label>
+        <label>Направление<select name="course"><option value="general">Общая библиотека</option><option value="oge">ОГЭ</option><option value="vpr">ВПР</option></select></label>
+        <label>Раздел или класс<select name="section"><option value="general">Общие материалы</option><optgroup label="ОГЭ"><option value="speaking">Устная часть</option><option value="listening">Аудирование</option><option value="reading">Чтение</option><option value="grammar">Грамматика и лексика</option><option value="writing">Письмо</option></optgroup><optgroup label="ВПР"><option value="grade4">4 класс</option><option value="grade5">5 класс</option><option value="grade6">6 класс</option><option value="grade7">7 класс</option><option value="grade8">8 класс</option></optgroup></select></label>
+        <label class="wide">Ссылка на файл или страницу<input name="url" type="url" placeholder="https://disk.yandex.ru/d/..."></label>
+        <div class="upload-divider wide"><span>или</span></div>
+        <label class="wide file-picker">Файл с компьютера<input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.epub,.fb2,.zip,image/*,audio/*,video/*"><span>Выбрать PDF, книгу или другой материал</span><small id="selectedFile">Файл не выбран</small></label>
+        <p class="field-hint wide">Укажите публичную ссылку Яндекс Диска либо выберите файл с компьютера. Достаточно одного варианта.</p>
+        <label class="wide">Комментарий<textarea name="note" rows="3" placeholder="Что находится внутри"></textarea></label>
+      </div><div class="modal-actions"><button value="cancel" formnovalidate class="ghost">Отмена</button><button type="submit" value="default" class="primary">Сохранить</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="planDialog" class="plan-dialog">
+    <div class="plan-shell"><div class="modal-head"><div><p>ЛИЧНЫЙ ПЛАН</p><h2>План подготовки</h2></div><button class="modal-close" id="closePlan" aria-label="Закрыть">×</button></div>
+      <div class="plan-summary"><label>Дата экзамена<input id="examDate" type="date"></label><div><span>Выполнено</span><strong id="planScore">0 из 0</strong></div><button class="primary" id="newTaskBtn"><span>＋</span> Новая задача</button></div>
+      <form id="taskForm" class="task-form hidden"><input type="hidden" name="id"><label>Задача<input name="title" required placeholder="Например, решить вариант №1"></label><label>Раздел<select name="section"><option value="grammar">Грамматика и лексика</option><option value="listening">Аудирование</option><option value="reading">Чтение</option><option value="writing">Письмо</option><option value="speaking">Устная часть</option></select></label><label>Срок<input name="due" type="date" required></label><label>Материал<select name="resourceId" id="taskResource"><option value="">Без материала</option></select></label><div><button type="button" class="ghost" id="cancelTask">Отмена</button><button class="primary" type="submit">Сохранить</button></div></form>
+      <div class="plan-filters" id="planFilters"><button class="active" data-status="all">Все</button><button data-status="todo">В работе</button><button data-status="done">Выполнено</button></div>
+      <div class="task-list" id="taskList"></div>
+    </div>
+  </dialog>
+
+  <div class="popover hidden" id="profilePopover"><strong>Teacher Marina</strong><button id="exportBtn">Экспортировать данные</button><label>Импортировать данные<input id="importInput" type="file" accept="application/json"></label></div>
+  <div class="toast" id="toast"></div><div class="scrim" id="scrim"></div>
+  <script src="script.js"></script>
+</body>
+</html>
