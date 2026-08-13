@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260813-8">
+  <link rel="stylesheet" href="styles.css?v=20260813-9">
 </head>
 <body>
   <div class="aurora one"></div><div class="aurora two"></div>
@@ -67,7 +67,7 @@
       </section>
 
       <section id="scheduleView" class="hidden">
-        <div class="schedule-controls"><div class="view-tabs"><button class="active">Неделя</button><button disabled>День</button><button disabled>Месяц</button></div><div><button id="scheduleToday">Сегодня</button><button id="schedulePrev" aria-label="Предыдущая неделя">‹</button><button id="scheduleNext" aria-label="Следующая неделя">›</button><button class="primary" id="addLessonBtn"><span>＋</span> Добавить занятие</button></div></div>
+        <div class="schedule-controls"><div class="view-tabs" id="scheduleViewTabs"><button class="active" data-calendar-view="week">Неделя</button><button data-calendar-view="day">День</button><button data-calendar-view="month">Месяц</button></div><div><button id="scheduleToday">Сегодня</button><button id="schedulePrev" aria-label="Назад">‹</button><button id="scheduleNext" aria-label="Вперёд">›</button><button class="primary" id="addLessonBtn"><span>＋</span> Добавить занятие</button></div></div>
         <div class="schedule-layout"><div class="week-calendar"><div class="week-head" id="weekHead"></div><div class="week-body"><div class="time-column" id="timeColumn"></div><div class="week-grid" id="weekGrid"></div></div></div><aside class="schedule-side"><article class="mini-calendar"><div><button id="miniPrev">‹</button><strong id="miniMonth"></strong><button id="miniNext">›</button></div><div class="mini-weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="mini-days" id="miniDays"></div></article><article class="schedule-groups"><div><h3>Мои группы</h3><button id="scheduleAddGroup">＋</button></div><div id="scheduleGroupList"></div><button id="scheduleAllGroups">Показать все группы　›</button></article></aside></div>
       </section>
 
@@ -133,6 +133,6 @@
 
   <div class="popover hidden" id="profilePopover"><strong>Teacher Marina Dmitrievna</strong><button id="exportBtn">Экспортировать данные</button><label>Импортировать данные<input id="importInput" type="file" accept="application/json"></label></div>
   <div class="toast" id="toast"></div><div class="scrim" id="scrim"></div>
-  <script src="script.js?v=20260813-8"></script>
+  <script src="script.js?v=20260813-9"></script>
 </body>
 </html>
