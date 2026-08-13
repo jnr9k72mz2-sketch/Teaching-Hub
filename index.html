@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260813-2">
+  <link rel="stylesheet" href="styles.css?v=20260813-3">
 </head>
 <body>
   <div class="aurora one"></div><div class="aurora two"></div>
@@ -52,6 +52,18 @@
           <span class="counter" id="count"></span>
         </div>
         <div class="cards" id="cards"></div>
+      </section>
+
+      <section id="homeView" class="hidden">
+        <div class="home-top">
+          <article class="welcome-card"><div><p>ВАШ УЧЕБНЫЙ ДЕНЬ</p><h2 id="greeting">Добрый день, Marina!</h2><span id="todayDate"></span></div><div class="welcome-parrot">🦜</div></article>
+          <article class="day-plan"><div class="widget-head"><div><p>ФОКУС</p><h3>План на сегодня</h3></div><button id="addDayTask" aria-label="Добавить задачу">＋</button></div><form id="dayTaskForm" class="hidden"><input id="dayTaskInput" required placeholder="Новая задача..."><button>Добавить</button></form><div id="dayTasks"></div></article>
+        </div>
+        <div class="home-section-title"><div><p>РАСПИСАНИЕ</p><h2>Ближайшие уроки</h2></div><button id="allGroupsBtn">Все группы　›</button></div>
+        <div class="lesson-list" id="lessonList"></div>
+        <div class="home-section-title"><div><p>БЫСТРЫЙ ДОСТУП</p><h2>Что будем делать?</h2></div></div>
+        <div class="quick-actions" id="quickActions"><button data-quick="add"><i>＋</i><span><strong>Добавить материал</strong><small>Ссылка или файл</small></span></button><button data-quick="library"><i>▱</i><span><strong>Открыть библиотеку</strong><small>Книги и PDF</small></span></button><button data-quick="materials"><i>✎</i><span><strong>Создать разработку</strong><small>План, игра, карточки</small></span></button><button data-quick="oge"><i>◇</i><span><strong>Подготовка к ОГЭ</strong><small id="quickProgress">Прогресс 0%</small></span></button><button data-quick="vpr"><i>☑</i><span><strong>Материалы ВПР</strong><small>4–8 классы</small></span></button></div>
+        <div class="home-bottom"><article class="recent-card"><div class="widget-head"><div><p>НЕДАВНЕЕ</p><h3>Продолжить работу</h3></div><button id="allLibraryBtn">Все материалы　›</button></div><div id="recentResources"></div></article><article class="stats-card"><p>ВАШЕ ПРОСТРАНСТВО</p><h3>Всё под рукой</h3><div id="homeStats"></div><blockquote>“Каждый урок — ещё один шаг вперёд.”</blockquote></article></div>
       </section>
 
       <section id="resourceView">
@@ -112,6 +124,6 @@
 
   <div class="popover hidden" id="profilePopover"><strong>Teacher Marina</strong><button id="exportBtn">Экспортировать данные</button><label>Импортировать данные<input id="importInput" type="file" accept="application/json"></label></div>
   <div class="toast" id="toast"></div><div class="scrim" id="scrim"></div>
-  <script src="script.js?v=20260813-2"></script>
+  <script src="script.js?v=20260813-3"></script>
 </body>
 </html>
