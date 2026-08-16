@@ -23,11 +23,12 @@ async function deleteFile(id){const db=await fileDB;return new Promise(resolve=>
 let groups=load('raduga-groups',seedGroups),resources=load('raduga-resources',seedResources),favorites=load('raduga-favorites',[]),level='all',resourceKind='all',examSection='all',view='oge';
 let tasks=load('raduga-tasks',[]),examDate=localStorage.getItem('raduga-exam-date')||'',taskStatus='all',pendingDeleteId=null;
 let dayTasks=load('raduga-day-tasks',[{id:1,title:'Подготовить материалы к урокам',done:false},{id:2,title:'Проверить домашние задания',done:false}]);
+let students=load('raduga-students',[]);
 let lessons=load('raduga-lessons',[]),scheduleStart=startOfWeek(new Date()),miniDate=new Date(),calendarView='week',selectedScheduleDate=new Date();
 resources=resources.map(r=>(r.course==='oge'&&(r.section||'general')==='general')?{...r,course:'general'}:r);localStorage.setItem('raduga-resources',JSON.stringify(resources));
 resources=resources.map(r=>({...r,collection:r.collection||'library'}));localStorage.setItem('raduga-resources',JSON.stringify(resources));
 groups=groups.map(g=>{const go=/^go\s*getter/i.test(String(g.series||''))||/^Go Getter/.test(g.name);const own=/^Own(?: It!)? [234]$/.test(g.name);return {...g,series:go?'Go\nGetter':own?'Own It!':g.series,name:own?g.name.replace(/^Own(?: It!)? /,'Own It! '):g.name}});localStorage.setItem('raduga-groups',JSON.stringify(groups));
-const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);const persist=()=>{localStorage.setItem('raduga-groups',JSON.stringify(groups));localStorage.setItem('raduga-resources',JSON.stringify(resources));localStorage.setItem('raduga-favorites',JSON.stringify(favorites));localStorage.setItem('raduga-tasks',JSON.stringify(tasks));localStorage.setItem('raduga-exam-date',examDate);localStorage.setItem('raduga-day-tasks',JSON.stringify(dayTasks));localStorage.setItem('raduga-lessons',JSON.stringify(lessons))};
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);const persist=()=>{localStorage.setItem('raduga-groups',JSON.stringify(groups));localStorage.setItem('raduga-resources',JSON.stringify(resources));localStorage.setItem('raduga-favorites',JSON.stringify(favorites));localStorage.setItem('raduga-tasks',JSON.stringify(tasks));localStorage.setItem('raduga-exam-date',examDate);localStorage.setItem('raduga-day-tasks',JSON.stringify(dayTasks));localStorage.setItem('raduga-lessons',JSON.stringify(lessons));localStorage.setItem('raduga-students',JSON.stringify(students))};
 function esc(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function toast(text){const el=$('#toast');el.textContent=text;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2400)}
 function validUrl(url){if(!url)return false;try{const u=new URL(url);return ['http:','https:'].includes(u.protocol)}catch{return false}}
@@ -67,3 +68,188 @@ $('#taskList').addEventListener('click',e=>{const b=e.target.closest('[data-task
 function closeMobile(){$('#sidebar').classList.remove('open');$('#scrim').classList.remove('show')}$('#openMenu').addEventListener('click',()=>{$('#sidebar').classList.add('open');$('#scrim').classList.add('show')});$('#closeMenu').addEventListener('click',closeMobile);$('#scrim').addEventListener('click',closeMobile);document.addEventListener('click',e=>{if(!e.target.closest('.profile')&&!e.target.closest('.popover'))$('#profilePopover').classList.add('hidden')});renderExamBlocks();renderResources();renderProgress();
 
 if(matchMedia('(hover:hover) and (pointer:fine)').matches){let lastSpark=0,sparkIndex=0;const colors=['#20e79a','#54f5c1','#ffad55','#dffdf5'],cursor=document.createElement('i');cursor.className='magic-cursor';document.body.appendChild(cursor);document.addEventListener('pointermove',e=>{cursor.style.left=`${e.clientX}px`;cursor.style.top=`${e.clientY}px`;const now=performance.now();if(now-lastSpark<22)return;lastSpark=now;for(let n=0;n<2;n++){const spark=document.createElement('i'),angle=Math.random()*Math.PI*2,distance=12+Math.random()*25;spark.className=`magic-spark ${sparkIndex++%3===0?'star':''}`;spark.style.left=`${e.clientX+(Math.random()-.5)*7}px`;spark.style.top=`${e.clientY+(Math.random()-.5)*7}px`;spark.style.setProperty('--spark',colors[sparkIndex%colors.length]);spark.style.setProperty('--drift-x',`${Math.cos(angle)*distance}px`);spark.style.setProperty('--drift-y',`${Math.sin(angle)*distance+12}px`);document.body.appendChild(spark);spark.addEventListener('animationend',()=>spark.remove(),{once:true})}},{passive:true});document.addEventListener('pointerdown',()=>cursor.classList.add('active'));document.addEventListener('pointerup',()=>cursor.classList.remove('active'))}
+
+// Единый раздел материалов: сохраняем старые записи из обеих коллекций.
+resources=resources.map(r=>({...r,collection:'materials'}));persist();renderResources();
+const showViewBase=showView;
+showView=function(next){
+  showViewBase(next==='library'?'materials':next);
+  if(next==='library'||next==='materials'){
+    $('#pageTitle').textContent='Материалы';
+    $('#pageSubtitle').textContent='Книги, PDF, ссылки и ваши разработки в одном месте.';
+  }
+  if(next==='schedule'&&calendarView!=='week')renderCalendarView();
+};
+const openResourceFormBase=openResourceForm;
+openResourceForm=function(resource){openResourceFormBase(resource);$('#resourceForm').elements.collection.value='materials'};
+
+// Восстанавливаем недельную сетку после переключения с месяца или дня.
+const renderScheduleBase=renderSchedule;
+renderSchedule=function(){
+  if(calendarView!=='week'){renderCalendarView();return}
+  if(!$('#weekHead'))$('#calendarCanvas').innerHTML='<div class="week-head" id="weekHead"></div><div class="week-body"><div class="time-column" id="timeColumn"></div><div class="week-grid" id="weekGrid"></div></div>';
+  renderScheduleBase();
+};
+
+function moveCalendar(direction){
+  if(calendarView==='week')scheduleStart=addDays(scheduleStart,direction*7);
+  else if(calendarView==='day')selectedScheduleDate=addDays(selectedScheduleDate,direction);
+  else selectedScheduleDate=new Date(selectedScheduleDate.getFullYear(),selectedScheduleDate.getMonth()+direction,1);
+  miniDate=new Date(selectedScheduleDate);
+  renderCalendarView();
+}
+$('#schedulePrev').addEventListener('click',e=>{e.stopImmediatePropagation();moveCalendar(-1)},{capture:true});
+$('#scheduleNext').addEventListener('click',e=>{e.stopImmediatePropagation();moveCalendar(1)},{capture:true});
+$('#scheduleToday').addEventListener('click',e=>{e.stopImmediatePropagation();selectedScheduleDate=new Date();scheduleStart=startOfWeek(selectedScheduleDate);miniDate=new Date();renderCalendarView()},{capture:true});
+$('#calendarCanvas').addEventListener('click',e=>{const day=e.target.closest('[data-schedule-date]');if(day)openLessonForm(null,day.dataset.scheduleDate)});
+$('#miniDays').addEventListener('click',e=>{const day=e.target.closest('[data-mini-date]');if(!day||calendarView==='week')return;e.stopImmediatePropagation();selectedScheduleDate=new Date(day.dataset.miniDate+'T00:00:00');renderCalendarView()},{capture:true});
+
+const themeIcons={system:'◐',dark:'☾',light:'☀'};
+function setTheme(theme,announce=false){
+  document.documentElement.dataset.theme=theme;
+  document.documentElement.classList.toggle('theme-light',theme==='light'||(theme==='system'&&matchMedia('(prefers-color-scheme:light)').matches));
+  localStorage.setItem('raduga-theme',theme);
+  $('#themeIcon').textContent=themeIcons[theme];
+  $$('#themeOptions [data-theme-choice]').forEach(button=>button.classList.toggle('active',button.dataset.themeChoice===theme));
+  if(announce)toast(theme==='system'?'Тема следует за системой':theme==='light'?'Включена светлая тема':'Включена тёмная тема');
+}
+setTheme(localStorage.getItem('raduga-theme')||'system');
+$('#themeBtn').addEventListener('click',e=>{e.stopPropagation();$('#profilePopover').classList.add('hidden');$('#themePopover').classList.toggle('hidden')});
+$('#themeOptions').addEventListener('click',e=>{const button=e.target.closest('[data-theme-choice]');if(!button)return;setTheme(button.dataset.themeChoice,true);$('#themePopover').classList.add('hidden')});
+document.addEventListener('click',e=>{if(!e.target.closest('#themePopover')&&!e.target.closest('#themeBtn'))$('#themePopover').classList.add('hidden')});
+matchMedia('(prefers-color-scheme:light)').addEventListener('change',()=>{if((localStorage.getItem('raduga-theme')||'system')==='system')setTheme('system')});
+
+// «Ссылки и Диск» фильтрует по наличию URL, а не по типу карточки.
+renderResources=function(){
+  const q=$('#search').value.trim().toLowerCase(),examView=['oge','vpr'].includes(view);
+  const matchesKind=r=>resourceKind==='all'||(resourceKind==='link'?validUrl(normalizeUrl(r.url)):r.kind===resourceKind);
+  const shown=resources.filter(r=>matchesKind(r)&&(!examView||r.course===view)&&(examSection==='all'||(r.section||'general')===examSection)&&[r.title,r.note,r.level].join(' ').toLowerCase().includes(q));
+  const icons={book:'▱',pdf:'PDF',link:'↗',lesson:'☷',presentation:'▣',cards:'▤',game:'✦',worksheet:'▧'};
+  $('#resources').innerHTML=shown.length?shown.map(r=>{
+    const url=normalizeUrl(r.url),source=r.fileId?'Файл на компьютере':validUrl(url)?(url.includes('yandex.')?'Яндекс Диск':'Внешняя ссылка'):'Ссылка не добавлена';
+    return `<article class="resource" data-id="${esc(r.id)}" data-kind="${r.kind}"><div class="resource-icon">${icons[r.kind]||'▤'}</div><div><h3>${esc(r.title)}</h3><p>${esc(r.level)} · ${esc(r.note||'Без описания')}${r.fileName?`<br>📎 ${esc(r.fileName)}`:''}</p><span class="resource-source ${!r.fileId&&!validUrl(url)?'missing':''}">${source}</span></div><div class="resource-actions"><button data-r-action="open" title="Открыть материал">↗</button><button data-r-action="edit" title="Изменить">✎</button><button class="direct-delete" data-r-action="delete" title="Удалить материал">•••</button></div></article>`;
+  }).join(''):'<div class="empty">Материалов со ссылками пока нет.</div>';
+};
+renderResources();
+
+let homeCalendarDate=new Date();
+function renderHomeCalendar(){
+  const y=homeCalendarDate.getFullYear(),m=homeCalendarDate.getMonth(),first=new Date(y,m,1),offset=(first.getDay()+6)%7,count=new Date(y,m+1,0).getDate(),today=isoDate(new Date());
+  $('#homeCalendarTitle').textContent=homeCalendarDate.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+  const previousCount=new Date(y,m,0).getDate(),cells=[];
+  for(let i=offset-1;i>=0;i--)cells.push(`<span class="outside"><b>${previousCount-i}</b></span>`);
+  for(let day=1;day<=count;day++){
+    const date=new Date(y,m,day),iso=isoDate(date),items=lessons.filter(l=>l.date===iso).sort((a,b)=>a.time.localeCompare(b.time));
+    cells.push(`<button class="${iso===today?'today':''} ${items.length?'has-lessons':''}" data-home-calendar-date="${iso}"><b>${day}</b>${items.slice(0,2).map(l=>{const g=groups.find(x=>String(x.id)===String(l.groupId));return `<span style="--event-color:${l.color}"><i></i>${l.time} ${esc(g?.name||'Группа')}</span>`}).join('')}${items.length>2?`<small>+ещё ${items.length-2}</small>`:''}</button>`);
+  }
+  const tail=(7-cells.length%7)%7;for(let day=1;day<=tail;day++)cells.push(`<span class="outside"><b>${day}</b></span>`);
+  $('#homeCalendarGrid').innerHTML=cells.join('');
+}
+const renderHomeBase=renderHome;
+renderHome=function(){renderHomeBase();renderHomeCalendar()};
+$('#homeCalendarPrev').addEventListener('click',()=>{homeCalendarDate=new Date(homeCalendarDate.getFullYear(),homeCalendarDate.getMonth()-1,1);renderHomeCalendar()});
+$('#homeCalendarNext').addEventListener('click',()=>{homeCalendarDate=new Date(homeCalendarDate.getFullYear(),homeCalendarDate.getMonth()+1,1);renderHomeCalendar()});
+$('#homeCalendarToday').addEventListener('click',()=>{homeCalendarDate=new Date();renderHomeCalendar()});
+$('#homeCalendarGrid').addEventListener('click',e=>{const day=e.target.closest('[data-home-calendar-date]');if(!day)return;selectedScheduleDate=new Date(day.dataset.homeCalendarDate+'T00:00:00');scheduleStart=startOfWeek(selectedScheduleDate);miniDate=new Date(selectedScheduleDate);calendarView='day';$$('#scheduleViewTabs button').forEach(button=>button.classList.toggle('active',button.dataset.calendarView==='day'));showView('schedule')});
+
+function renderTodaySchedule(){
+  const today=isoDate(new Date()),items=lessons.filter(lesson=>lesson.date===today).sort((a,b)=>a.time.localeCompare(b.time));
+  $('#lessonList').innerHTML=items.length?items.map(lesson=>{
+    const group=groups.find(item=>String(item.id)===String(lesson.groupId)),color=lesson.color||group?.colors?.[0]||'#00d884';
+    return `<article><time>${esc(lesson.time)}<small>${endTime(lesson.time,lesson.duration)}</small></time><div class="lesson-mark" style="--lesson-color:${color}">${esc(group?.num||group?.level||'•')}</div><div><h3>${esc(group?.name||'Группа')}</h3><p>${esc(lesson.note||group?.topic||'Тема не указана')} · ${esc(group?.level||'')}</p></div><button data-home-lesson="${lesson.id}">Открыть занятие　›</button></article>`;
+  }).join(''):'<div class="today-schedule-empty"><strong>На сегодня занятий нет</strong><span>Добавьте занятие в расписании.</span><button id="emptyTodaySchedule">＋ Добавить</button></div>';
+}
+const renderHomeDashboard=renderHome;
+renderHome=function(){renderHomeDashboard();renderTodaySchedule()};
+$('#lessonList').addEventListener('click',e=>{const button=e.target.closest('[data-home-lesson]');if(!button)return;const lesson=lessons.find(item=>String(item.id)===button.dataset.homeLesson);if(lesson)openLessonForm(lesson)});
+$('#lessonList').addEventListener('click',e=>{if(e.target.closest('#emptyTodaySchedule'))openLessonForm(null,isoDate(new Date()))});
+$('#allGroupsBtn').addEventListener('click',e=>{e.stopImmediatePropagation();selectedScheduleDate=new Date();scheduleStart=startOfWeek(selectedScheduleDate);calendarView='day';$$('#scheduleViewTabs button').forEach(button=>button.classList.toggle('active',button.dataset.calendarView==='day'));showView('schedule')},{capture:true});
+$('#cards').addEventListener('click',e=>{const button=e.target.closest('[data-action="resources"]');if(!button)return;e.stopImmediatePropagation();resourceKind=button.dataset.kind;showView('materials');$$('#resourceTabs button').forEach(tab=>tab.classList.toggle('active',tab.dataset.kind===resourceKind));renderResources()},{capture:true});
+
+function studentWord(count){const last=count%10,lastTwo=count%100;return last===1&&lastTwo!==11?'ученик':last>=2&&last<=4&&(lastTwo<12||lastTwo>14)?'ученика':'учеников'}
+function renderStudents(){
+  const q=$('#search').value.trim().toLowerCase(),shown=students.filter(student=>[student.name,student.age,student.level,student.book,student.homework,student.note].join(' ').toLowerCase().includes(q));
+  $('#studentCount').textContent=`${shown.length} ${studentWord(shown.length)}`;
+  $('#studentCards').innerHTML=shown.length?shown.map(student=>`<article class="student-card" data-student-id="${student.id}"><div class="student-avatar">${esc(student.name).trim().charAt(0).toUpperCase()||'•'}</div><div class="student-main"><div><h2>${esc(student.name)}</h2><span>${esc(student.age||'Возраст не указан')} · ${esc(student.level)}</span></div><section><small>УЧЕБНИК</small><strong>${esc(student.book)}</strong>${validUrl(normalizeUrl(student.url))?'<button data-student-action="open-book">Открыть учебник ↗</button>':''}</section><section class="student-homework"><small>ДОМАШНЕЕ ЗАДАНИЕ</small><p>${esc(student.homework||'Не задано')}</p></section>${student.note?`<p class="student-note">${esc(student.note)}</p>`:''}</div><div class="student-actions"><button data-student-action="edit" title="Изменить">✎</button><button data-student-action="delete" title="Удалить">×</button></div></article>`).join(''):'<div class="student-empty"><strong>Индивидуальных учеников пока нет</strong><span>Добавьте первого ученика и укажите его учебник.</span></div>';
+}
+function openStudentForm(student){const form=$('#studentForm');form.reset();$('#studentModalTitle').textContent=student?'Редактировать ученика':'Новый ученик';if(student)Object.keys(student).forEach(key=>{if(form.elements[key])form.elements[key].value=student[key]});else form.elements.id.value='';$('#studentDialog').showModal()}
+const showViewBeforeStudents=showView;
+showView=function(next){
+  if(next!=='students'){showViewBeforeStudents(next);$('#studentView').classList.add('hidden');return}
+  view='students';$('#homeView').classList.add('hidden');$('#scheduleView').classList.add('hidden');$('#groupView').classList.add('hidden');$('#resourceView').classList.add('hidden');$('#studentView').classList.remove('hidden');$('#pageTitle').textContent='Индивидуальные ученики';$('#pageSubtitle').textContent='Учебники, домашние задания и заметки для индивидуальных занятий.';$('#addBtn').classList.add('hidden');$$('#nav button').forEach(button=>button.classList.toggle('active',button.dataset.view==='students'));renderStudents();closeMobile();
+};
+$('#addStudentBtn').addEventListener('click',()=>openStudentForm());
+$('#closeStudent').addEventListener('click',()=>$('#studentDialog').close());$('#cancelStudent').addEventListener('click',()=>$('#studentDialog').close());
+$('#studentForm').addEventListener('submit',e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.currentTarget));data.url=normalizeUrl(data.url);const student=students.find(item=>String(item.id)===data.id);if(student)Object.assign(student,data);else students.unshift({...data,id:Date.now()});persist();renderStudents();$('#studentDialog').close();toast('Ученик сохранён')});
+$('#studentCards').addEventListener('click',e=>{const button=e.target.closest('[data-student-action]');if(!button)return;const card=button.closest('[data-student-id]'),student=students.find(item=>String(item.id)===card.dataset.studentId);if(!student)return;if(button.dataset.studentAction==='edit')openStudentForm(student);if(button.dataset.studentAction==='open-book'&&validUrl(normalizeUrl(student.url)))window.location.assign(normalizeUrl(student.url));if(button.dataset.studentAction==='delete'&&confirm(`Удалить ученика «${student.name}»?`)){students=students.filter(item=>String(item.id)!==String(student.id));persist();renderStudents();toast('Ученик удалён')}});
+$('#search').addEventListener('input',e=>{if(view!=='students')return;e.stopImmediatePropagation();renderStudents()},{capture:true});
+
+// Restore the last open section after a page refresh.
+const showViewPersistent=showView;
+showView=function(next){
+  const normalized=next==='library'?'materials':next==='levels'?'groups':next;
+  showViewPersistent(normalized);
+  localStorage.setItem('raduga-current-view',normalized);
+};
+const savedView=localStorage.getItem('raduga-current-view');
+const availableViews=['home','schedule','groups','students','materials','oge','vpr'];
+showView(availableViews.includes(savedView)?savedView:'oge');
+
+// Individual students can be selected and edited in the same lesson form as groups.
+const studentScheduleItem=student=>({id:`student-${student.id}`,name:student.name,age:student.age,level:student.level,topic:student.homework?`ДЗ: ${student.homework}`:'Индивидуальное занятие',num:'У',colors:['#b07adf','#7250a5'],isStudent:true});
+let rawGroups=groups;
+function enableStudentLessonLookup(){
+  if(groups?.__withStudents)return;
+  rawGroups=groups;
+  groups=new Proxy(rawGroups,{get(target,property,receiver){if(property==='__withStudents')return true;if(property==='find')return predicate=>target.find(predicate)||students.map(studentScheduleItem).find(predicate);return Reflect.get(target,property,receiver)}});
+}
+enableStudentLessonLookup();
+function renderScheduleParticipants(){
+  const entries=[...rawGroups.map(group=>({...group,isStudent:false})),...students.map(studentScheduleItem)];
+  $('#scheduleGroupList').innerHTML=entries.slice(0,8).map(entry=>`<div><i style="background:${entry.colors?.[0]||'#00d884'}"></i><span><strong>${esc(entry.name)}</strong><small>${entry.isStudent?'Ученик':'Группа'} · ${esc(entry.age||'')} ${esc(entry.level||'')}</small></span><b>${lessons.filter(lesson=>String(lesson.groupId)===String(entry.id)).length}</b></div>`).join('');
+  $('.schedule-groups h3').textContent='Группы и ученики';
+}
+const openLessonForStudentsBase=openLessonForm;
+openLessonForm=function(lesson,date){
+  openLessonForStudentsBase(lesson,date);
+  const selected=lesson?.groupId||$('#lessonGroup').value;
+  $('#lessonGroup').innerHTML=`<optgroup label="Группы">${rawGroups.map(group=>`<option value="${group.id}">${esc(group.name)}</option>`).join('')}</optgroup><optgroup label="Индивидуальные ученики">${students.map(student=>`<option value="student-${student.id}">${esc(student.name)} · ${esc(student.level)}</option>`).join('')}</optgroup>`;
+  if(selected)$('#lessonGroup').value=String(selected);
+  const label=$('#lessonGroup').closest('label');if(label?.firstChild)label.firstChild.nodeValue='Группа или ученик';
+};
+const renderScheduleForStudentsBase=renderSchedule;
+renderSchedule=function(){renderScheduleForStudentsBase();renderScheduleParticipants()};
+const renderCalendarForStudentsBase=renderCalendarView;
+renderCalendarView=function(){renderCalendarForStudentsBase();renderScheduleParticipants()};
+$('#groupForm').addEventListener('submit',()=>setTimeout(()=>{enableStudentLessonLookup();rawGroups=groups.__withStudents?rawGroups:groups},0));
+$('#cards').addEventListener('click',()=>setTimeout(()=>{if(!groups.__withStudents)enableStudentLessonLookup()},0));
+if(view==='schedule')renderCalendarView();
+
+// Recurring lessons with an explicit teaching period.
+const lessonGrid=$('#lessonForm .form-grid');
+lessonGrid.insertAdjacentHTML('beforeend',`<div class="recurrence-fields wide"><label>Повторение<select name="recurrence" id="lessonRecurrence"><option value="none">Не повторять</option><option value="mon-wed">Понедельник / среда</option><option value="tue-thu">Вторник / четверг</option><option value="custom">Другие дни</option></select></label><label id="repeatUntilLabel" class="hidden">Конец обучения<input name="repeatUntil" id="lessonRepeatUntil" type="date"></label><fieldset id="lessonWeekdays" class="weekday-picker hidden"><legend>Дни занятий</legend>${[['1','Пн'],['2','Вт'],['3','Ср'],['4','Чт'],['5','Пт'],['6','Сб'],['0','Вс']].map(([value,label])=>`<label><input type="checkbox" name="repeatDay" value="${value}"><span>${label}</span></label>`).join('')}</fieldset><p id="recurrenceSummary" class="recurrence-summary hidden"></p></div>`);
+const recurrenceSelect=$('#lessonRecurrence'),repeatUntil=$('#lessonRepeatUntil'),weekdayPicker=$('#lessonWeekdays'),repeatUntilLabel=$('#repeatUntilLabel');
+function academicYearEnd(startValue){const start=startValue?new Date(startValue+'T00:00:00'):new Date(),year=start.getMonth()<=4?start.getFullYear():start.getFullYear()+1;return isoDate(new Date(year,4,31))}
+function selectedRepeatDays(){return [...$$('#lessonWeekdays input:checked')].map(input=>Number(input.value))}
+function updateRecurrenceFields(){
+  const recurring=recurrenceSelect.value!=='none',presets={'mon-wed':[1,3],'tue-thu':[2,4]};
+  repeatUntilLabel.classList.toggle('hidden',!recurring);weekdayPicker.classList.toggle('hidden',!recurring);$('#recurrenceSummary').classList.toggle('hidden',!recurring);
+  if(presets[recurrenceSelect.value])$$('#lessonWeekdays input').forEach(input=>input.checked=presets[recurrenceSelect.value].includes(Number(input.value)));
+  if(recurring&&!repeatUntil.value)repeatUntil.value=academicYearEnd($('#lessonForm').elements.date.value);
+  if(recurring){const names=['воскресеньям','понедельникам','вторникам','средам','четвергам','пятницам','субботам'];$('#recurrenceSummary').textContent=selectedRepeatDays().length?`Каждую неделю по ${selectedRepeatDays().map(day=>names[day]).join(' и ')}`:'Выберите хотя бы один день'}
+}
+recurrenceSelect.addEventListener('change',updateRecurrenceFields);weekdayPicker.addEventListener('change',()=>{if(recurrenceSelect.value!=='custom')recurrenceSelect.value='custom';updateRecurrenceFields()});
+$('#lessonForm').elements.date.addEventListener('change',e=>{if(recurrenceSelect.value!=='none')repeatUntil.value=academicYearEnd(e.target.value)});
+const openRecurringLessonBase=openLessonForm;
+openLessonForm=function(lesson,date){
+  openRecurringLessonBase(lesson,date);recurrenceSelect.value='none';repeatUntil.value='';$$('#lessonWeekdays input').forEach(input=>input.checked=false);updateRecurrenceFields();
+  const dateLabel=$('#lessonForm').elements.date.closest('label');if(dateLabel?.firstChild)dateLabel.firstChild.nodeValue=lesson?'Дата':'Начало занятий';
+};
+$('#lessonForm').addEventListener('submit',e=>{
+  if(recurrenceSelect.value==='none')return;
+  e.preventDefault();e.stopImmediatePropagation();
+  const form=e.currentTarget,data=Object.fromEntries(new FormData(form)),days=selectedRepeatDays(),start=new Date(data.date+'T00:00:00'),end=new Date(data.repeatUntil+'T00:00:00');
+  if(!days.length){toast('Выберите дни занятий');return}if(!data.repeatUntil||end<start){toast('Укажите корректную дату окончания');return}
+  const seriesId=Date.now(),created=[];for(let date=new Date(start);date<=end;date=addDays(date,1)){if(!days.includes(date.getDay()))continue;const lessonDate=isoDate(date);created.push({id:`${seriesId}-${lessonDate}`,seriesId,groupId:data.groupId,date:lessonDate,time:data.time,duration:data.duration,color:data.color,note:data.note})}
+  lessons.push(...created);persist();renderCalendarView();$('#lessonDialog').close();toast(`Добавлено занятий: ${created.length}`);
+},{capture:true});

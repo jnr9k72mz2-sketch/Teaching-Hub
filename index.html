@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260813-9">
+  <script>const t=localStorage.getItem('raduga-theme')||'system',l=t==='light'||(t==='system'&&matchMedia('(prefers-color-scheme:light)').matches);document.documentElement.dataset.theme=t;document.documentElement.classList.toggle('theme-light',l)</script>
+  <link rel="stylesheet" href="styles.css?v=20260816-10">
 </head>
 <body>
   <div class="aurora one"></div><div class="aurora two"></div>
@@ -18,9 +19,8 @@
       <button data-view="home"><i>⌂</i><span>Главная</span></button>
       <button data-view="schedule"><i>▦</i><span>Расписание</span><b>›</b></button>
       <button data-view="groups"><i>♧</i><span>Мои группы</span><b>›</b></button>
-      <button data-view="library"><i>▱</i><span>Библиотека</span></button>
+      <button data-view="students"><i>☺</i><span>Ученики</span><b>›</b></button>
       <button data-view="materials"><i>▤</i><span>Материалы</span></button>
-      <button data-view="levels"><i>▥</i><span>Уровни</span></button>
       <hr>
       <button class="active" data-view="oge"><i>◇</i><span>ОГЭ</span><b>›</b></button>
       <button data-view="vpr"><i>☑</i><span>ВПР</span></button>
@@ -35,6 +35,7 @@
     <header>
       <button class="icon-btn menu" id="openMenu" aria-label="Меню">☰</button>
       <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Найти группу или материал..."></label>
+      <button class="icon-btn theme-btn" id="themeBtn" aria-label="Выбрать тему" title="Выбрать тему"><span id="themeIcon">◐</span></button>
       <button class="profile" id="profileBtn"><span class="avatar"><img class="profile-photo" src="assets/teacher-marina.png" alt="Teacher Marina Dmitrievna"></span><span><strong>Teacher Marina Dmitrievna</strong><small>Преподаватель</small></span><b>⌄</b></button>
     </header>
 
@@ -54,25 +55,31 @@
         <div class="cards" id="cards"></div>
       </section>
 
+      <section id="studentView" class="hidden">
+        <div class="student-toolbar"><div><strong>Индивидуальные ученики</strong><span id="studentCount"></span></div><button class="secondary" id="addStudentBtn">＋ Добавить ученика</button></div>
+        <div class="student-grid" id="studentCards"></div>
+      </section>
+
       <section id="homeView" class="hidden">
         <div class="home-top">
-          <article class="welcome-card"><div><p>ВАШ УЧЕБНЫЙ ДЕНЬ</p><h2 id="greeting">Добрый день, Marina!</h2><span id="todayDate"></span></div><div class="welcome-parrot">🦜</div></article>
+          <article class="welcome-card"><div><p>ВАШ УЧЕБНЫЙ ДЕНЬ</p><h2 id="greeting">Добрый день, Marina!</h2><span id="todayDate"></span></div></article>
           <article class="day-plan"><div class="widget-head"><div><p>ФОКУС</p><h3>План на сегодня</h3></div><button id="addDayTask" aria-label="Добавить задачу">＋</button></div><form id="dayTaskForm" class="hidden"><input id="dayTaskInput" required placeholder="Новая задача..."><button>Добавить</button></form><div id="dayTasks"></div></article>
         </div>
-        <div class="home-section-title" id="scheduleSection"><div><p>РАСПИСАНИЕ</p><h2>Ближайшие уроки</h2></div><button id="allGroupsBtn">Все группы　›</button></div>
+        <article class="home-calendar"><div class="home-calendar-head"><div><p>КАЛЕНДАРЬ</p><h2 id="homeCalendarTitle"></h2></div><div><button id="homeCalendarToday">Сегодня</button><button id="homeCalendarPrev" aria-label="Предыдущий месяц">‹</button><button id="homeCalendarNext" aria-label="Следующий месяц">›</button></div></div><div class="home-calendar-weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="home-calendar-grid" id="homeCalendarGrid"></div></article>
+        <div class="home-section-title" id="scheduleSection"><div><p>СЕГОДНЯ</p><h2>Расписание на сегодня</h2></div><button id="allGroupsBtn">Всё расписание　›</button></div>
         <div class="lesson-list" id="lessonList"></div>
         <div class="home-section-title"><div><p>БЫСТРЫЙ ДОСТУП</p><h2>Что будем делать?</h2></div></div>
-        <div class="quick-actions" id="quickActions"><button data-quick="add"><i>＋</i><span><strong>Добавить материал</strong><small>Ссылка или файл</small></span></button><button data-quick="library"><i>▱</i><span><strong>Открыть библиотеку</strong><small>Книги и PDF</small></span></button><button data-quick="materials"><i>✎</i><span><strong>Создать разработку</strong><small>План, игра, карточки</small></span></button><button data-quick="oge"><i>◇</i><span><strong>Подготовка к ОГЭ</strong><small id="quickProgress">Прогресс 0%</small></span></button><button data-quick="vpr"><i>☑</i><span><strong>Материалы ВПР</strong><small>4–8 классы</small></span></button></div>
+        <div class="quick-actions" id="quickActions"><button data-quick="add"><i>＋</i><span><strong>Добавить материал</strong><small>Ссылка или файл</small></span></button><button data-quick="materials"><i>▤</i><span><strong>Открыть материалы</strong><small>Книги, PDF и разработки</small></span></button><button data-quick="oge"><i>◇</i><span><strong>Подготовка к ОГЭ</strong><small id="quickProgress">Прогресс 0%</small></span></button><button data-quick="vpr"><i>☑</i><span><strong>Материалы ВПР</strong><small>4–8 классы</small></span></button></div>
         <div class="home-bottom"><article class="recent-card"><div class="widget-head"><div><p>НЕДАВНЕЕ</p><h3>Продолжить работу</h3></div><button id="allLibraryBtn">Все материалы　›</button></div><div id="recentResources"></div></article><article class="stats-card"><p>ВАШЕ ПРОСТРАНСТВО</p><h3>Всё под рукой</h3><div id="homeStats"></div><blockquote>“Каждый урок — ещё один шаг вперёд.”</blockquote></article></div>
       </section>
 
       <section id="scheduleView" class="hidden">
         <div class="schedule-controls"><div class="view-tabs" id="scheduleViewTabs"><button class="active" data-calendar-view="week">Неделя</button><button data-calendar-view="day">День</button><button data-calendar-view="month">Месяц</button></div><div><button id="scheduleToday">Сегодня</button><button id="schedulePrev" aria-label="Назад">‹</button><button id="scheduleNext" aria-label="Вперёд">›</button><button class="primary" id="addLessonBtn"><span>＋</span> Добавить занятие</button></div></div>
-        <div class="schedule-layout"><div class="week-calendar"><div class="week-head" id="weekHead"></div><div class="week-body"><div class="time-column" id="timeColumn"></div><div class="week-grid" id="weekGrid"></div></div></div><aside class="schedule-side"><article class="mini-calendar"><div><button id="miniPrev">‹</button><strong id="miniMonth"></strong><button id="miniNext">›</button></div><div class="mini-weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="mini-days" id="miniDays"></div></article><article class="schedule-groups"><div><h3>Мои группы</h3><button id="scheduleAddGroup">＋</button></div><div id="scheduleGroupList"></div><button id="scheduleAllGroups">Показать все группы　›</button></article></aside></div>
+        <div class="schedule-layout"><div class="week-calendar" id="calendarCanvas"><div class="week-head" id="weekHead"></div><div class="week-body"><div class="time-column" id="timeColumn"></div><div class="week-grid" id="weekGrid"></div></div></div><aside class="schedule-side"><article class="mini-calendar"><div><button id="miniPrev">‹</button><strong id="miniMonth"></strong><button id="miniNext">›</button></div><div class="mini-weekdays"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="mini-days" id="miniDays"></div></article><article class="schedule-groups"><div><h3>Мои группы</h3><button id="scheduleAddGroup">＋</button></div><div id="scheduleGroupList"></div><button id="scheduleAllGroups">Показать все группы　›</button></article></aside></div>
       </section>
 
       <section id="resourceView">
-        <div class="resource-toolbar"><div class="resource-tabs" id="resourceTabs"><button class="active" data-kind="all">Все</button><button data-kind="book">Книги</button><button data-kind="pdf">PDF</button><button data-kind="link">Ссылки</button></div><button class="secondary" id="addResourceBtn">＋ Добавить материал</button></div>
+        <div class="resource-toolbar"><div class="resource-tabs" id="resourceTabs"><button class="active" data-kind="all">Все</button><button data-kind="book">Книги</button><button data-kind="pdf">PDF</button><button data-kind="link">Ссылки и Диск</button></div><button class="secondary" id="addResourceBtn">＋ Добавить материал</button></div>
         <div class="exam-blocks" id="examBlocks"></div>
         <div class="resource-grid" id="resources"></div>
         <div class="exam-widgets" id="examWidgets">
@@ -97,10 +104,10 @@
   </dialog>
 
   <dialog id="resourceDialog">
-    <form method="dialog" id="resourceForm"><div class="modal-head"><div><p>БИБЛИОТЕКА</p><h2 id="resourceModalTitle">Новый материал</h2></div><button class="modal-close" value="cancel" formnovalidate>×</button></div>
+    <form method="dialog" id="resourceForm"><div class="modal-head"><div><p>МАТЕРИАЛЫ</p><h2 id="resourceModalTitle">Новый материал</h2></div><button class="modal-close" value="cancel" formnovalidate>×</button></div>
       <input type="hidden" name="id"><div class="form-grid">
         <label class="wide">Название<input name="title" required placeholder="Workbook Unit 3"></label>
-        <label>Коллекция<select name="collection"><option value="library">Библиотека</option><option value="materials">Собственные материалы</option></select></label>
+        <input type="hidden" name="collection" value="materials">
         <label>Тип<select name="kind"><option value="book">Книга</option><option value="pdf">PDF</option><option value="link">Ссылка</option><option value="lesson">План урока</option><option value="presentation">Презентация</option><option value="cards">Карточки</option><option value="game">Игра</option><option value="worksheet">Рабочий лист</option></select></label>
         <label>Уровень<select name="level"><option>Starter</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></label>
         <label>Направление<select name="course"><option value="general">Общая библиотека</option><option value="oge">ОГЭ</option><option value="vpr">ВПР</option></select></label>
@@ -131,8 +138,13 @@
     <form id="lessonForm"><div class="modal-head"><div><p>РАСПИСАНИЕ</p><h2 id="lessonModalTitle">Новое занятие</h2></div><button type="button" class="modal-close" id="closeLesson">×</button></div><input type="hidden" name="id"><div class="form-grid"><label class="wide">Группа<select name="groupId" id="lessonGroup" required></select></label><label>Дата<input name="date" type="date" required></label><label>Начало<input name="time" type="time" required></label><label>Длительность<select name="duration"><option value="40">40 минут</option><option value="50" selected>50 минут</option><option value="60">60 минут</option><option value="90">90 минут</option></select></label><label>Цвет<select name="color"><option value="#11c878">Изумрудный</option><option value="#a96ee5">Фиолетовый</option><option value="#36a9ef">Голубой</option><option value="#ffb21e">Жёлтый</option><option value="#ff7417">Оранжевый</option></select></label><label class="wide">Тема или заметка<input name="note" placeholder="Например, Unit 3 — Grammar"></label></div><div class="modal-actions"><button type="button" class="danger-btn hidden" id="deleteLesson">Удалить</button><button type="button" class="ghost" id="cancelLesson">Отмена</button><button class="primary" type="submit">Сохранить</button></div></form>
   </dialog>
 
+  <dialog id="studentDialog" class="student-dialog">
+    <form id="studentForm"><div class="modal-head"><div><p>УЧЕНИК</p><h2 id="studentModalTitle">Новый ученик</h2></div><button type="button" class="modal-close" id="closeStudent">×</button></div><input type="hidden" name="id"><div class="form-grid"><label class="wide">Имя ученика<input name="name" required placeholder="Например, Анна"></label><label>Возраст<input name="age" placeholder="12 лет"></label><label>Уровень<select name="level"><option>Starter</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></label><label class="wide">Учебник<input name="book" required placeholder="Go Getter 2"></label><label class="wide">Домашнее задание<textarea name="homework" rows="3" placeholder="Workbook, Unit 3, page 24"></textarea></label><label class="wide">Ссылка на учебник или материал<input name="url" type="text" inputmode="url" placeholder="https://disk.yandex.ru/..."></label><label class="wide">Заметка<textarea name="note" rows="2" placeholder="Цели, особенности занятий"></textarea></label></div><div class="modal-actions"><button type="button" class="ghost" id="cancelStudent">Отмена</button><button class="primary" type="submit">Сохранить</button></div></form>
+  </dialog>
+
+  <div class="theme-popover hidden" id="themePopover"><div><strong>Цветовая тема</strong><small>Выберите оформление интерфейса</small></div><div class="theme-options" id="themeOptions"><button data-theme-choice="system"><i>◐</i><span>Система</span><small>Как на устройстве</small></button><button data-theme-choice="dark"><i>☾</i><span>Тёмная</span><small>Тёмный фон</small></button><button data-theme-choice="light"><i>☀</i><span>Светлая</span><small>Светлый фон</small></button></div></div>
   <div class="popover hidden" id="profilePopover"><strong>Teacher Marina Dmitrievna</strong><button id="exportBtn">Экспортировать данные</button><label>Импортировать данные<input id="importInput" type="file" accept="application/json"></label></div>
   <div class="toast" id="toast"></div><div class="scrim" id="scrim"></div>
-  <script src="script.js?v=20260813-9"></script>
+  <script src="script.js?v=20260816-11"></script>
 </body>
 </html>
