@@ -28,7 +28,7 @@ let lessons=load('raduga-lessons',[]),scheduleStart=startOfWeek(new Date()),mini
 resources=resources.map(r=>(r.course==='oge'&&(r.section||'general')==='general')?{...r,course:'general'}:r);localStorage.setItem('raduga-resources',JSON.stringify(resources));
 resources=resources.map(r=>({...r,collection:r.collection||'library'}));localStorage.setItem('raduga-resources',JSON.stringify(resources));
 groups=groups.map(g=>{const go=/^go\s*getter/i.test(String(g.series||''))||/^Go Getter/.test(g.name);const own=/^Own(?: It!)? [234]$/.test(g.name);return {...g,series:go?'Go\nGetter':own?'Own It!':g.series,name:own?g.name.replace(/^Own(?: It!)? /,'Own It! '):g.name}});localStorage.setItem('raduga-groups',JSON.stringify(groups));
-const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);const persist=()=>{localStorage.setItem('raduga-groups',JSON.stringify(groups));localStorage.setItem('raduga-resources',JSON.stringify(resources));localStorage.setItem('raduga-favorites',JSON.stringify(favorites));localStorage.setItem('raduga-tasks',JSON.stringify(tasks));localStorage.setItem('raduga-exam-date',examDate);localStorage.setItem('raduga-day-tasks',JSON.stringify(dayTasks));localStorage.setItem('raduga-lessons',JSON.stringify(lessons));localStorage.setItem('raduga-students',JSON.stringify(students))};
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);const cloudSnapshot=()=>({groups:[...groups],students,resources,favorites,tasks,dayTasks,lessons,examDate});const persist=()=>{localStorage.setItem('raduga-groups',JSON.stringify(groups));localStorage.setItem('raduga-resources',JSON.stringify(resources));localStorage.setItem('raduga-favorites',JSON.stringify(favorites));localStorage.setItem('raduga-tasks',JSON.stringify(tasks));localStorage.setItem('raduga-exam-date',examDate);localStorage.setItem('raduga-day-tasks',JSON.stringify(dayTasks));localStorage.setItem('raduga-lessons',JSON.stringify(lessons));localStorage.setItem('raduga-students',JSON.stringify(students));window.firebaseSyncSave?.(cloudSnapshot())};
 function esc(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function toast(text){const el=$('#toast');el.textContent=text;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2400)}
 function validUrl(url){if(!url)return false;try{const u=new URL(url);return ['http:','https:'].includes(u.protocol)}catch{return false}}
@@ -272,3 +272,12 @@ $('#importInput').addEventListener('change',async e=>{
   }catch(error){toast('Этот файл не подходит. Скачайте новую копию')}
   e.target.value='';
 },{capture:true});
+
+window.teachingHubCloud={
+  snapshot:cloudSnapshot,
+  apply(data){
+    if(Array.isArray(data.groups))groups=data.groups;if(Array.isArray(data.students))students=data.students;if(Array.isArray(data.resources))resources=data.resources.map(resource=>({...resource,collection:'materials'}));if(Array.isArray(data.favorites))favorites=data.favorites;if(Array.isArray(data.tasks))tasks=data.tasks;if(Array.isArray(data.dayTasks))dayTasks=data.dayTasks;if(Array.isArray(data.lessons))lessons=data.lessons;if(typeof data.examDate==='string')examDate=data.examDate;
+    rawGroups=groups;enableStudentLessonLookup();persist();renderGroups();renderStudents();renderResources();renderProgress();renderHome();if(view==='schedule')renderCalendarView();
+  },
+  toast
+};

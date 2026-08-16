@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script>const t=localStorage.getItem('raduga-theme')||'system',l=t==='light'||(t==='system'&&matchMedia('(prefers-color-scheme:light)').matches);document.documentElement.dataset.theme=t;document.documentElement.classList.toggle('theme-light',l)</script>
-  <link rel="stylesheet" href="styles.css?v=20260816-10">
+  <link rel="stylesheet" href="styles.css?v=20260816-11">
 </head>
 <body>
   <div class="aurora one"></div><div class="aurora two"></div>
@@ -35,6 +35,7 @@
     <header>
       <button class="icon-btn menu" id="openMenu" aria-label="Меню">☰</button>
       <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Найти группу или материал..."></label>
+      <button class="icon-btn sync-btn" id="syncBtn" aria-label="Облачная синхронизация" title="Синхронизация"><span id="syncIcon">☁</span></button>
       <button class="icon-btn theme-btn" id="themeBtn" aria-label="Выбрать тему" title="Выбрать тему"><span id="themeIcon">◐</span></button>
       <button class="profile" id="profileBtn"><span class="avatar"><img class="profile-photo" src="assets/teacher-marina.png" alt="Teacher Marina Dmitrievna"></span><span><strong>Teacher Marina Dmitrievna</strong><small>Преподаватель</small></span><b>⌄</b></button>
     </header>
@@ -142,9 +143,14 @@
     <form id="studentForm"><div class="modal-head"><div><p>УЧЕНИК</p><h2 id="studentModalTitle">Новый ученик</h2></div><button type="button" class="modal-close" id="closeStudent">×</button></div><input type="hidden" name="id"><div class="form-grid"><label class="wide">Имя ученика<input name="name" required placeholder="Например, Анна"></label><label>Возраст<input name="age" placeholder="12 лет"></label><label>Уровень<select name="level"><option>Starter</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></label><label class="wide">Учебник<input name="book" required placeholder="Go Getter 2"></label><label class="wide">Домашнее задание<textarea name="homework" rows="3" placeholder="Workbook, Unit 3, page 24"></textarea></label><label class="wide">Ссылка на учебник или материал<input name="url" type="text" inputmode="url" placeholder="https://disk.yandex.ru/..."></label><label class="wide">Заметка<textarea name="note" rows="2" placeholder="Цели, особенности занятий"></textarea></label></div><div class="modal-actions"><button type="button" class="ghost" id="cancelStudent">Отмена</button><button class="primary" type="submit">Сохранить</button></div></form>
   </dialog>
 
+  <dialog id="syncDialog" class="sync-dialog">
+    <form id="syncForm"><div class="modal-head"><div><p>FIREBASE</p><h2>Синхронизация</h2></div><button type="button" class="modal-close" id="closeSync">×</button></div><div id="syncSignedOut"><p class="sync-explanation">Войдите с одинаковым email на компьютере и телефоне.</p><div class="form-grid"><label class="wide">Email<input id="syncEmail" type="email" required autocomplete="email" placeholder="teacher@example.com"></label><label class="wide">Пароль<input id="syncPassword" type="password" required minlength="6" autocomplete="current-password" placeholder="Минимум 6 символов"></label></div><p class="sync-error" id="syncError"></p><div class="modal-actions"><button type="button" class="ghost" id="syncRegister">Создать аккаунт</button><button class="primary" type="submit">Войти</button></div></div><div id="syncSignedIn" class="hidden"><div class="sync-success"><i>✓</i><div><strong>Синхронизация включена</strong><span id="syncUserEmail"></span><small id="syncStatusText">Данные сохранены</small></div></div><div class="modal-actions"><button type="button" class="ghost" id="syncNow">Синхронизировать</button><button type="button" class="danger-btn" id="syncLogout">Выйти</button></div></div></form>
+  </dialog>
+
   <div class="theme-popover hidden" id="themePopover"><div><strong>Цветовая тема</strong><small>Выберите оформление интерфейса</small></div><div class="theme-options" id="themeOptions"><button data-theme-choice="system"><i>◐</i><span>Система</span><small>Как на устройстве</small></button><button data-theme-choice="dark"><i>☾</i><span>Тёмная</span><small>Тёмный фон</small></button><button data-theme-choice="light"><i>☀</i><span>Светлая</span><small>Светлый фон</small></button></div></div>
   <div class="popover hidden" id="profilePopover"><strong>Teacher Marina Dmitrievna</strong><button id="exportBtn">Экспортировать данные</button><label>Импортировать данные<input id="importInput" type="file" accept="application/json"></label></div>
   <div class="toast" id="toast"></div><div class="scrim" id="scrim"></div>
-  <script src="script.js?v=20260816-12"></script>
+  <script src="script.js?v=20260816-13"></script>
+  <script type="module" src="firebase-sync.js?v=2"></script>
 </body>
 </html>
