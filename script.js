@@ -253,3 +253,22 @@ $('#lessonForm').addEventListener('submit',e=>{
   const seriesId=Date.now(),created=[];for(let date=new Date(start);date<=end;date=addDays(date,1)){if(!days.includes(date.getDay()))continue;const lessonDate=isoDate(date);created.push({id:`${seriesId}-${lessonDate}`,seriesId,groupId:data.groupId,date:lessonDate,time:data.time,duration:data.duration,color:data.color,note:data.note})}
   lessons.push(...created);persist();renderCalendarView();$('#lessonDialog').close();toast(`Добавлено занятий: ${created.length}`);
 },{capture:true});
+
+// Complete backup and restore for moving data between local and published sites.
+$('#exportBtn').addEventListener('click',e=>{
+  e.stopImmediatePropagation();
+  const backup={version:2,exportedAt:new Date().toISOString(),groups:[...rawGroups],students,resources,favorites,tasks,dayTasks,lessons,examDate};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`teaching-hub-backup-${isoDate(new Date())}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);toast('Файл со всеми данными скачан');
+},{capture:true});
+$('#importInput').addEventListener('change',async e=>{
+  e.stopImmediatePropagation();const file=e.target.files[0];if(!file)return;
+  try{
+    const data=JSON.parse(await file.text());
+    const recognized=['groups','students','resources','favorites','tasks','dayTasks','lessons'].some(key=>Array.isArray(data[key]));
+    if(!recognized)throw new Error('unknown-format');
+    if(Array.isArray(data.groups))groups=data.groups;if(Array.isArray(data.students))students=data.students;if(Array.isArray(data.resources))resources=data.resources.map(resource=>({...resource,collection:'materials'}));if(Array.isArray(data.favorites))favorites=data.favorites;if(Array.isArray(data.tasks))tasks=data.tasks;if(Array.isArray(data.dayTasks))dayTasks=data.dayTasks;if(Array.isArray(data.lessons))lessons=data.lessons;if(typeof data.examDate==='string')examDate=data.examDate;
+    rawGroups=groups;enableStudentLessonLookup();persist();renderGroups();renderStudents();renderResources();renderProgress();renderHome();if(view==='schedule')renderCalendarView();
+    const total=rawGroups.length+students.length+resources.length+lessons.length;toast(`Импорт готов: ${total} записей`);
+  }catch(error){toast('Этот файл не подходит. Скачайте новую копию')}
+  e.target.value='';
+},{capture:true});
