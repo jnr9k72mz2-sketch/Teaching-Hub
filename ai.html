@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teaching Hub AI</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      text-decoration: none;
+      color: #4f46e5;
+      font-weight: bold;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 34px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 13px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 16px;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 25px;
+      padding: 15px;
+      border: none;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #4f46e5;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f9fafb;
+      border-radius: 16px;
+
+      line-height: 1.6;
+      min-height: 80px;
+    }
+
+    .status {
+      margin-top: 12px;
+      color: #6b7280;
+      font-size: 14px;
+    }.result h1,
+.result h2,
+.result h3 {
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.result p {
+  margin: 6px 0;
+}
+
+.result ul,
+.result ol {
+  margin-top: 8px;
+  margin-bottom: 12px;
+  padding-left: 28px;
+}
+
+.result li {
+  margin-bottom: 5px;
+}
+
+.result br {
+  line-height: 1;
+}.result-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.result-actions button {
+  flex: 1;
+  margin-top: 0;
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+}
+
+.result-actions button:hover {
+  background: #e0e7ff;
+}
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <a href="index.html" class="back-link">
+      ← Назад в Teaching Hub
+    </a>
+
+    <div class="card">
+
+      <h1>✨ AI Методист</h1>
+
+      <div class="subtitle">
+        Создай материал для урока английского языка с помощью ИИ.
+      </div>
+
+      <label>Класс / возраст</label>
+      <input
+        id="age"
+        type="text"
+        placeholder="Например: 5 класс, 11 лет"
+      >
+
+      <label>Уровень</label>
+      <select id="level">
+        <option value="A0">A0</option>
+        <option value="A1" selected>A1</option>
+        <option value="A2">A2</option>
+        <option value="B1">B1</option>
+      </select>
+
+      <label>Тема</label>
+      <input
+        id="topic"
+        type="text"
+        placeholder="Например: Have got / Has got"
+      >
+
+      <label>Что создать</label>
+      <select id="material">
+        <option>План урока</option>
+        <option>Упражнения</option>
+        <option>Текст для чтения</option>
+        <option>Игру</option>
+        <option>Домашнее задание</option>
+        <option>Полный урок</option>
+      </select>
+
+      <label>Дополнительные пожелания</label>
+      <textarea
+        id="details"
+        placeholder="Например: урок 40 минут, ученица плохо читает, задания несложные"
+      ></textarea>
+
+      <button id="generateButton">
+        ✨ Создать с ИИ
+      </button>
+
+      <div class="status" id="status"></div>
+
+      <div class="result" id="result">
+        Здесь появится ответ AI Методиста.
+      </div>
+<div class="result-actions">
+  <button id="copyButton" type="button">📋 Скопировать ответ</button>
+  <button id="regenerateButton" type="button">🔄 Создать ещё раз</button>
+</div>
+    </div>
+
+  </div>
+
+
+<script>
+
+const WORKER_URL =
+  "https://teaching-hub-ai.marinarudenko2010.workers.dev/";
+
+const button = document.getElementById("generateButton");
+const result = document.getElementById("result");
+const status = document.getElementById("status");
+const copyButton = document.getElementById("copyButton");
+const regenerateButton = document.getElementById("regenerateButton");
+
+button.addEventListener("click", async () => {
+
+  const age = document.getElementById("age").value.trim();
+  const level = document.getElementById("level").value;
+  const topic = document.getElementById("topic").value.trim();
+  const material = document.getElementById("material").value;
+  const details = document.getElementById("details").value.trim();
+
+
+  if (!topic) {
+    alert("Укажи тему урока.");
+    return;
+  }
+
+
+  const prompt = `
+Ты методист по английскому языку.
+
+Создай материал для преподавателя.
+
+Класс / возраст:
+${age || "не указан"}
+
+Уровень:
+${level}
+
+Тема:
+${topic}
+
+Что нужно создать:
+${material}
+
+Дополнительные пожелания:
+${details || "нет"}
+
+Материал должен быть практичным, понятным и подходить указанному уровню.
+`;
+
+
+  button.disabled = true;
+  button.textContent = "Создаю...";
+
+  status.textContent = "ИИ готовит материал...";
+  result.textContent = "";
+
+
+  try {
+
+    const response = await fetch(WORKER_URL, {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        prompt: prompt
+      })
+
+    });
+
+
+    const data = await response.json();
+
+
+    if (!response.ok) {
+      throw new Error(
+        data?.details?.error?.message ||
+        data?.message ||
+        "Ошибка сервера"
+      );
+    }
+
+
+    result.innerHTML=
+      marked.parse(data.answer || "Ответ не получен.");
+
+    status.textContent =
+      "Готово ✓";
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    result.textContent =
+      "Не удалось получить ответ от ИИ.\n\n" +
+      error.message;
+
+    status.textContent =
+      "Произошла ошибка.";
+
+  }
+
+
+  button.disabled = false;
+  button.textContent = "✨ Создать с ИИ";
+
+});
+copyButton.addEventListener("click", async () => {
+  const text = result.innerText.trim();
+
+  if (!text || text === "Здесь появится ответ AI Методиста.") {
+    alert("Сначала создай материал.");
+    return;
+  }
+
+  await navigator.clipboard.writeText(text);
+
+  copyButton.textContent = "✓ Скопировано";
+
+  setTimeout(() => {
+    copyButton.textContent = "📋 Скопировать ответ";
+  }, 1500);
+});
+
+
+regenerateButton.addEventListener("click", () => {
+  button.click();
+});
+</script>
+
+</body>
+</html>

@@ -5,7 +5,7 @@ import {firebaseConfig} from './firebase-config.js';
 
 const $=selector=>document.querySelector(selector),configured=!firebaseConfig.apiKey.includes('PASTE_');
 const dialog=$('#syncDialog'),button=$('#syncBtn'),error=$('#syncError'),signedOut=$('#syncSignedOut'),signedIn=$('#syncSignedIn');
-let auth,db,user,unsubscribe,saveTimer,applyingRemote=false;
+let auth,db,user,unsubscribe,saveTimer,applyingRemote=false,localWriteInFlight=false;
 
 function setStatus(text,state='ready'){$('#syncStatusText').textContent=text;button.dataset.syncState=state;$('#syncIcon').textContent=state==='saving'?'↻':state==='error'?'!':'☁'}
 function showError(message='') {error.textContent=message}
@@ -14,7 +14,7 @@ function credentials(){return {email:$('#syncEmail').value.trim(),password:$('#s
 async function loadCloud(currentUser){
   const reference=doc(db,'users',currentUser.uid,'teachingHub','state'),snapshot=await getDoc(reference);
   if(snapshot.exists()){applyingRemote=true;window.teachingHubCloud.apply(snapshot.data().data||{});applyingRemote=false}else await setDoc(reference,{data:window.teachingHubCloud.snapshot(),updatedAt:serverTimestamp()});
-  unsubscribe?.();unsubscribe=onSnapshot(reference,next=>{if(!next.exists()||applyingRemote)return;applyingRemote=true;window.teachingHubCloud.apply(next.data().data||{});applyingRemote=false;setStatus('Данные синхронизированы')},()=>setStatus('Ошибка синхронизации','error'));
+  unsubscribe?.();unsubscribe=onSnapshot(reference,next=>{if(!next.exists()||applyingRemote||localWriteInFlight)return;applyingRemote=true;window.teachingHubCloud.apply(next.data().data||{});applyingRemote=false;setStatus('Данные синхронизированы')},()=>setStatus('Ошибка синхронизации','error'));
 }
 
 button.addEventListener('click',()=>{showError(configured?'':'Сначала добавьте настройки Firebase-проекта');dialog.showModal()});
@@ -26,6 +26,6 @@ $('#syncNow').addEventListener('click',()=>window.firebaseSyncSave?.(window.teac
 
 if(configured){
   const app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);
-  window.firebaseSyncSave=(data,immediate=false)=>{if(!user||applyingRemote)return;clearTimeout(saveTimer);const save=async()=>{setStatus('Сохраняю…','saving');try{await setDoc(doc(db,'users',user.uid,'teachingHub','state'),{data,updatedAt:serverTimestamp()});setStatus('Данные сохранены')}catch{setStatus('Ошибка сохранения','error')}};if(immediate)save();else saveTimer=setTimeout(save,700)};
+  window.firebaseSyncSave=(data,immediate=false)=>{if(!user||applyingRemote)return;clearTimeout(saveTimer);const save=async()=>{localWriteInFlight=true;setStatus('Сохраняю…','saving');try{await setDoc(doc(db,'users',user.uid,'teachingHub','state'),{data,updatedAt:serverTimestamp()});setStatus('Данные сохранены')}catch{setStatus('Ошибка сохранения','error')}finally{localWriteInFlight=false}};if(immediate)save();else saveTimer=setTimeout(save,700)};
   onAuthStateChanged(auth,async currentUser=>{user=currentUser;signedOut.classList.toggle('hidden',!!user);signedIn.classList.toggle('hidden',!user);button.classList.toggle('connected',!!user);if(user){$('#syncUserEmail').textContent=user.email;setStatus('Загружаю данные…','saving');try{await loadCloud(user);setStatus('Данные синхронизированы')}catch{setStatus('Ошибка подключения','error')}}else{unsubscribe?.();setStatus('Войдите для синхронизации')}});
 }else setStatus('Firebase не настроен','error');
