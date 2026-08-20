@@ -123,7 +123,28 @@
 
 .result br {
   line-height: 1;
-}.result-actions {
+}
+
+.result table {
+  width: 100%;
+  margin: 16px 0;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.result th,
+.result td {
+  padding: 10px 12px;
+  border: 1px solid #dbe1ea;
+  text-align: left;
+  vertical-align: top;
+}
+
+.result th {
+  background: #eef2ff;
+}
+
+.result-actions {
   display: flex;
   gap: 12px;
   margin-top: 14px;
@@ -262,6 +283,12 @@ ${material}
 ${details || "нет"}
 
 Материал должен быть практичным, понятным и подходить указанному уровню.
+
+Правила оформления ответа:
+- Используй Markdown.
+- Если нужна таблица, обязательно оформляй её как Markdown-таблицу с вертикальными чертами и строкой-разделителем после заголовков.
+- Не создавай изображения и не используй конструкции вида ![слово] без настоящей ссылки на изображение.
+- Для наглядных подсказок используй подходящие эмодзи (например: 👦, 👧, 🐱, 🍎, 🐶, 🐦) или обычный текст.
 `;
 
 
@@ -301,8 +328,9 @@ ${details || "нет"}
     }
 
 
-    result.innerHTML=
-      marked.parse(data.answer || "Ответ не получен.");
+    const icons = {i:"👤",boy:"👦",girl:"👧",cat:"🐱",apple:"🍎",we:"👥",you:"👉",they:"👥",dog:"🐶",birds:"🐦"};
+    const answer = (data.answer || "Ответ не получен.").replace(/!\[([^\]]+)\](?!\()/g, (_, label) => icons[label.trim().toLowerCase()] || `🖼️ ${label}`);
+    result.innerHTML = marked.parse(answer);
 
     status.textContent =
       "Готово ✓";
